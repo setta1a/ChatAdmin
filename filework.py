@@ -10,10 +10,16 @@ def create_chat(chat_id, chat_name):
 def add_log(s):
     file = open('logs.txt', 'a')
     date = datetime.now()
-    file.write(date + ' ' + s + '\n')
+    file.write(f'{date} {s} \n')
     file.close()
 
 
 def get_chats_id():
-    return [int(el.split()[0]) for el in open('chats.txt')]
+    file = open('chats.txt')
+    res = {}
+    for line in file:
+        key, val = line.split()
+        res[int(key)] = val
+
+    return res
 
