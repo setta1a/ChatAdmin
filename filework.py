@@ -18,7 +18,7 @@ def get_chats_id():
     file = open('chats.txt')
     res = {}
     for line in file:
-        key, val = line.split()
+        key, val = line.split(maxsplit=1)
         res[int(key)] = val
 
     return res
