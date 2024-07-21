@@ -23,3 +23,22 @@ def get_chats_id():
 
     return res
 
+
+def parse_pm():
+    return [int(el) for el in open('pms.txt')]
+
+
+def add_pm(username):
+    file = open('pms.txt', 'a')
+    file.write(username + '\n')
+    file.close()
+
+
+def remove_pm(line_to_remove):
+    with open('pms.txt', 'r') as file:
+        lines = file.readlines()
+
+    with open('pms.txt', 'w') as file:
+        for line in lines:
+            if line.strip("\n") != line_to_remove:
+                file.write(line)

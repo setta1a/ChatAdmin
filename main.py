@@ -81,7 +81,7 @@ async def change_permissions(user_id, role, message):
             elif role == 'USER':
                 await bot.send_message(message.chat.id, 'Пользователь понижен')
 
-            add_log(f'пользователю {user_id} присвоена роль {role}')
+            add_log(f'пользователю {user_id} присвоена роль {role} пользователем {message.from_user.username}')
         else:
             print('nonono i dont will change')
 
@@ -122,7 +122,7 @@ async def handle_create(message: types.Message):
         index = result.find(' chats')
         chat_id = result[index + 16: index + 26]
         create_chat(chat_id, chat_title)
-        add_log(f'создан чат с названием {chat_title} и id={chat_id}')
+        add_log(f'пользователем {message.from_user.username} создан чат с названием {chat_title} и id={chat_id}')
 
         for key in admins:
             if admins[key] == 'A':
@@ -162,7 +162,7 @@ async def add_user(message: types.Message):
         except Exception as e:
             print(e)
             await bot.send_message(message.chat.id, 'Неверное название чата или имя пользователя')
-        add_log(f'пользователь {user_tag} добавлен в чат {chatname}')
+        add_log(f'пользователь {user_tag} добавлен в чат {chatname} пользователем {message.from_user.username}')
     else:
         await bot.send_message(message.chat.id, 'Вы не являетесь админом')
 
@@ -181,7 +181,7 @@ async def delete_from_one_group(message: types.Message):
         for key in chats:
             if chats[key] == chat_name + '\n':
                 chat_id = key
-        add_log(f'пользователь {user_id} удален из группы {chat_name}')
+        add_log(f'пользователь {user_id} удален из группы {chat_name} пользователем {message.from_user.username}')
         await telethon_client(DeleteChatUserRequest(chat_id=chat_id, user_id=user_id))
     else:
         await bot.send_message(message.chat.id, 'Вы не являетесь админом')
@@ -194,10 +194,13 @@ async def delete_from_all_groups(message: types.Message):
         for chat_id in get_chats_id():
             try:
                 await telethon_client(DeleteChatUserRequest(chat_id=chat_id, user_id=user_id))
-                add_log(f"пользователь {user_id} удален из всех групп")
+                add_log(f"пользователь {user_id} удален из всех групп пользователем {message.from_user.username}")
             except Exception as e:
                 print(e)
                 print('Пользователь не состоит в данной группе')
+
+    else:
+        await bot.send_message(message.chat.id, 'Вы не являетесь админом')
 
 
 async def main():
