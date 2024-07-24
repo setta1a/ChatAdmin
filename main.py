@@ -14,7 +14,7 @@ import os
 import asyncio
 from datetime import datetime
 
-from filework import create_chat, add_log, get_chats_id
+from filework import create_chat, add_log, get_chats_id, parse_admins, update_admins
 
 load_dotenv()
 bot = Bot(os.getenv('TOKEN'))
@@ -22,26 +22,7 @@ dp = Dispatcher()
 bot_accaunt = '@leannwalkerr'
 telethon_client = TelegramClient(bot_accaunt, os.getenv('API_ID'), os.getenv('API_HASH'))
 
-admins = {bot_accaunt: 'A', '@setta1a': 'A'}
-
-
-# async def is_it_pm(message, chat_id):
-#     chat = await telethon_client.get_entity(chat_id)
-#     is_admin = False
-#
-#     if hasattr(chat, 'megagroup') and chat.megagroup:
-#         participants = await telethon_client(GetParticipantsRequest(
-#             channel=InputPeerChannel(chat.id, chat.access_hash),
-#             filter=ChannelParticipantsAdmins(),
-#             offset=0,
-#             limit=100,
-#             hash=0
-#         ))
-#
-#         # Проверка, является ли пользователь администратором
-#         is_admin = any(participant.user_id == message.from_user.username for participant in participants.participants)
-#
-#     return is_admin
+admins = parse_admins(bot_accaunt)
 
 
 def is_it_admin(message):
@@ -82,6 +63,8 @@ async def change_permissions(user_id, role, message):
             elif role == 'USER':
                 await bot.send_message(message.chat.id, 'Пользователь понижен ⬇️✅')
 
+            update_admins(admins)
+
             add_log(f'пользователю {user_id} присвоена роль {role} пользователем {message.from_user.username}')
         else:
             print('nonono i dont will change')
@@ -92,13 +75,16 @@ async def change_permissions(user_id, role, message):
 
 async def promote_to_admin(chat_id, user_id):
     if user_id != bot_accaunt:
-        my_chat = await telethon_client.get_entity(PeerChat(int(chat_id)))
-        if admins[user_id] == 'A':
-            await telethon_client.edit_admin(entity=my_chat, user=user_id, is_admin=True, manage_call=True,
-                                             ban_users=True, invite_users=True, add_admins=True)
-        elif admins[user_id] == 'PM':
-            await telethon_client.edit_admin(entity=my_chat, user=user_id, is_admin=True, manage_call=True,
-                                             ban_users=True, invite_users=True, add_admins=False)
+        try:
+            my_chat = await telethon_client.get_entity(PeerChat(int(chat_id)))
+            if admins[user_id] == 'A':
+                await telethon_client.edit_admin(entity=my_chat, user=user_id, is_admin=True, manage_call=True,
+                                                 ban_users=True, invite_users=True, add_admins=True)
+            elif admins[user_id] == 'PM':
+                await telethon_client.edit_admin(entity=my_chat, user=user_id, is_admin=True, manage_call=True,
+                                                 ban_users=True, invite_users=True, add_admins=False)
+        except Exception as e:
+            print(e)
 
 
 @dp.message(Command('start'))
@@ -129,10 +115,10 @@ async def handle_create(message: types.Message):
         create_chat(chat_id, chat_title)
         add_log(f'пользователем {message.from_user.username} создан чат с названием {chat_title} и id={chat_id}')
 
-        for key in admins:
-            if admins[key] == 'A':
-                print(chat_id, key)
-                await promote_to_admin(chat_id, key)
+        # for key in admins:
+        #     if admins[key] == 'A':
+        #         print(chat_id, key)
+        #         await promote_to_admin(chat_id, key)
 
         await message.reply(f'Чат "{chat_title}" создан! ✅')
     else:
@@ -193,7 +179,8 @@ async def delete_from_one_group(message: types.Message):
         try:
             await telethon_client(DeleteChatUserRequest(chat_id=chat_id, user_id=user_id))
             await bot.send_message('Пользователь успешно удален ✅')
-        except:
+        except Exception as e:
+            print(e)
             await bot.send_message(message.chat.id, 'Неверное название чата или имя пользователя ❌')
     else:
         await bot.send_message(message.chat.id, 'Вы не являетесь админом ❌')
@@ -207,7 +194,7 @@ async def delete_from_all_groups(message: types.Message):
         for chat_id in chats:
             try:
                 await telethon_client(DeleteChatUserRequest(chat_id=chat_id, user_id=user_id))
-                await bot.send_message(message.chat.id, str(chats[chat_id]) + ': ✅')
+                await bot.send_message(message.chat.id, str(chats[chat_id]).replace('\n', '') + ': ✅')
             except Exception as e:
                 print(e)
 

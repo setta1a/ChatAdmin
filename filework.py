@@ -42,3 +42,23 @@ def remove_pm(line_to_remove):
         for line in lines:
             if line.strip("\n") != line_to_remove:
                 file.write(line)
+
+
+def parse_admins(bot_ac):
+    res = {bot_ac: 'A'}
+    file = open('admins.txt')
+    for line in file:
+        key, role = line.split()
+        res[key] = role
+
+    file.close()
+
+    return res
+
+
+def update_admins(admins):
+    file = open('admins.txt', 'w')
+    for key in admins:
+        file.write(f'{key} {admins[key]}')
+
+    file.close()
