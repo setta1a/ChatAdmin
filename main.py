@@ -17,9 +17,9 @@ from datetime import datetime
 from filework import create_chat, add_log, get_chats_id, parse_admins, update_admins
 
 load_dotenv()
-bot = Bot(os.getenv('BOT_TOKEN'))
+bot = Bot(os.getenv('TOKEN'))
 dp = Dispatcher()
-bot_accaunt = '@leannwalkerr'
+bot_accaunt  = '@leannwalkerr'
 telethon_client = TelegramClient(bot_accaunt, os.getenv('API_ID'), os.getenv('API_HASH'))
 
 admins = parse_admins(bot_accaunt)
