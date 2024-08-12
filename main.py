@@ -12,7 +12,6 @@ from telethon.tl.types import InputUser, InputPeerUser, PeerChat, PeerUser, Chat
 from dotenv import load_dotenv
 import os
 import asyncio
-from datetime import datetime
 
 from filework import create_chat, add_log, get_chats_id, parse_admins, update_admins
 
@@ -55,8 +54,9 @@ async def change_permissions(user_id, role, message):
                                                          manage_call=False,
                                                          ban_users=False, invite_users=False)
                         admins[user_id] = 'USER'
-                except:
-                    print("Пользователь не в группе")
+                except Exception as e:
+                    await bot.send_message(933403584, text=f'{e}')
+                    await bot.send_message(message.chat.id, text=f'Ошибка ❌\n {str(e)}')
 
             if role == 'PM':
                 await bot.send_message(message.chat.id, 'Пользователь повышен ⬆️✅')
@@ -73,7 +73,7 @@ async def change_permissions(user_id, role, message):
         await bot.send_message(message.chat.id, 'Вы не являетесь админом ❌')
 
 
-async def promote_to_admin(chat_id, user_id):
+async def promote_to_admin(chat_id, user_id, message):
     if user_id != bot_accaunt:
         try:
             my_chat = await telethon_client.get_entity(PeerChat(int(chat_id)))
@@ -84,7 +84,8 @@ async def promote_to_admin(chat_id, user_id):
                 await telethon_client.edit_admin(entity=my_chat, user=user_id, is_admin=True, manage_call=True,
                                                  ban_users=True, invite_users=True, add_admins=False)
         except Exception as e:
-            print(e)
+            await bot.send_message(933403584, text=f'{e}')
+            await bot.send_message(message.chat.id, text=f'Ошибка ❌\n {str(e)}')
 
 
 @dp.message(Command('start'))
@@ -115,10 +116,8 @@ async def handle_create(message: types.Message):
         create_chat(chat_id, chat_title)
         add_log(f'пользователем {message.from_user.username} создан чат с названием {chat_title} и id={chat_id}')
 
-        # for key in admins:
-        #     if admins[key] == 'A':
-        #         print(chat_id, key)
-        #         await promote_to_admin(chat_id, key)
+        for key in admins:
+            await promote_to_admin(chat_id, key, message)
 
         await message.reply(f'Чат "{chat_title}" создан! ✅')
     else:
@@ -151,11 +150,13 @@ async def add_user(message: types.Message):
             ))
             await bot.send_message(message.chat.id, 'Пользователь добавлен в чат ✅')
         except Exception as e:
-            print(e)
             if 'The authenticated user is already a participant of the chat' in str(e):
                 await bot.send_message(message.chat.id, 'Пользователь уже состоит в чате ✅')
-            else:
+            elif 'Invalid object ID for a chat' in str(e):
                 await bot.send_message(message.chat.id, 'Неверное название чата или имя пользователя ❌')
+            else:
+                await bot.send_message(933403584, text=f'{e}')
+                await bot.send_message(message.chat.id, text=f'Ошибка ❌\n {str(e)}')
         add_log(f'пользователь {user_tag} добавлен в чат {chatname} пользователем {message.from_user.username}')
     else:
         await bot.send_message(message.chat.id, 'Вы не являетесь админом ❌')
@@ -180,8 +181,11 @@ async def delete_from_one_group(message: types.Message):
             await telethon_client(DeleteChatUserRequest(chat_id=chat_id, user_id=user_id))
             await bot.send_message('Пользователь успешно удален ✅')
         except Exception as e:
-            print(e)
-            await bot.send_message(message.chat.id, 'Неверное название чата или имя пользователя ❌')
+            if 'Invalid object ID for a chat' in str(e):
+                await bot.send_message(message.chat.id, 'Неверное название чата или имя пользователя ❌')
+            else:
+                await bot.send_message(933403584, text=f'{e}')
+                await bot.send_message(message.chat.id, text=f'Ошибка ❌\n {str(e)}')
     else:
         await bot.send_message(message.chat.id, 'Вы не являетесь админом ❌')
 
@@ -196,13 +200,25 @@ async def delete_from_all_groups(message: types.Message):
                 await telethon_client(DeleteChatUserRequest(chat_id=chat_id, user_id=user_id))
                 await bot.send_message(message.chat.id, str(chats[chat_id]).replace('\n', '') + ': ✅')
             except Exception as e:
-                print(e)
+                await bot.send_message(933403584, text=f'{e}')
+                await bot.send_message(message.chat.id, text=f'Ошибка ❌\n {str(e)}')
 
         add_log(f"пользователь {user_id} удален из всех групп пользователем {message.from_user.username}")
 
 
     else:
         await bot.send_message(message.chat.id, 'Вы не являетесь админом')
+
+
+@dp.message(lambda message: message.text.startswith('/'))
+async def unknown_command(message: types.Message):
+    await message.reply("<b>Извините, такой команды нет. Вот список доступных команд:</b>\n"
+                                '/create_chat <i>chatname</i> — <b>создать чат</b>\n' +
+                                '/add_user @username  <i>chatname</i> — <b>добавить пользователя в чат</b>\n' +
+                                '/change_permissions <i>@username</i> PM/USER — <b>выдать/забрать права ПМа</b>\n' +
+                                '/delete_from_group @username  <i>chatname</i> — <b>удалить пользователя из одного чата</b>\n' +
+                                '/delete_from_all <i>@username</i> — <b>удалить пользователя из всех чатов</b>\n' +
+                                '/logs — получить логи', parse_mode='html')
 
 
 async def main():
