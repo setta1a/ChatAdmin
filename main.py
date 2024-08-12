@@ -19,7 +19,7 @@ from filework import create_chat, add_log, get_chats_id, parse_admins, update_ad
 load_dotenv()
 bot = Bot(os.getenv('TOKEN'))
 dp = Dispatcher()
-bot_accaunt = '@PROFITEROLE_chatbot'
+bot_accaunt = '@Bot_PRFTRL'
 telethon_client = TelegramClient(bot_accaunt[1:], os.getenv('API_ID'), os.getenv('API_HASH'))
 
 admins = parse_admins(bot_accaunt)
