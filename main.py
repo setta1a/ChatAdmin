@@ -164,8 +164,11 @@ async def add_user(message: types.Message):
 
 @dp.message(Command('logs'))
 async def send_logs(message: types.Message):
-    logs = FSInputFile('logs.txt')
-    await bot.send_document(message.chat.id, logs)
+    if is_it_admin(message) in ('A', 'PM'):
+        logs = FSInputFile('logs.txt')
+        await bot.send_document(message.chat.id, logs)
+    else:
+        await bot.send_message(message.chat.id, 'Вы не являетесь админом ❌')
 
 
 @dp.message(Command('delete_from_group'))
@@ -179,12 +182,12 @@ async def delete_from_one_group(message: types.Message):
         add_log(f'пользователь {user_id} удален из группы {chat_name} пользователем {message.from_user.username}')
         try:
             await telethon_client(DeleteChatUserRequest(chat_id=chat_id, user_id=user_id))
-            await bot.send_message('Пользователь успешно удален ✅')
+            await bot.send_message(message.chat.id, 'Пользователь успешно удален ✅')
         except Exception as e:
             if 'Invalid object ID for a chat' in str(e):
                 await bot.send_message(message.chat.id, 'Неверное название чата или имя пользователя ❌')
             else:
-                await bot.send_message(933403584, text=f'{e}')
+                await bot.send_message(933403584, text=f'Ошибка {e}')
                 await bot.send_message(message.chat.id, text=f'Ошибка ❌\n {str(e)}')
     else:
         await bot.send_message(message.chat.id, 'Вы не являетесь админом ❌')
@@ -193,7 +196,7 @@ async def delete_from_one_group(message: types.Message):
 @dp.message(Command('delete_from_all'))
 async def delete_from_all_groups(message: types.Message):
     cmd, user_id = message.text.split(maxsplit=1)
-    if is_it_admin(message) == 'A':
+    if is_it_admin(message) in ('A', 'PM'):
         chats = get_chats_id()
         for chat_id in chats:
             try:
