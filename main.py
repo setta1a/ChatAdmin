@@ -111,7 +111,7 @@ async def handle_start(message: types.Message):
                            text='<b>Привет, это бот для управления рабочими чатами, вот мои возможности:</b>\n\n' +
                                 '/create_chat <i>chatname</i> — <b>создать чат</b>\n' +
                                 '/add_user @username  <i>chatname</i> — <b>добавить пользователя в чат</b>\n' +
-                                '/change_permissions <i>@username</i> PM/USER — <b>выдать/забрать права ПМа</b>\n' +
+                                '/change_permission <i>@username</i> PM/USER — <b>выдать/забрать права ПМа</b>\n' +
                                 '/delete_from_group @username  <i>chatname</i> — <b>удалить пользователя из одного чата</b>\n' +
                                 '/delete_from_all <i>@username</i> — <b>удалить пользователя из всех чатов</b>\n' +
                                 '/logs — получить логи', parse_mode='html')
@@ -153,12 +153,12 @@ async def handle_create(message: types.Message):
         await bot.send_message(message.chat.id, 'Вы не являетесь админом')
 
 
-@dp.message(Command('change_permissions'))
+@dp.message(Command('change_permission'))
 async def handle_change(message: types.Message):
     if is_it_admin(message) == 'A':
         command_parts = message.text.split(maxsplit=2)
         if len(command_parts) < 3:
-            await handle_missing_args(message, '/change_permissions <@username> PM/USER')
+            await handle_missing_args(message, '/change_permission <@username> PM/USER')
             return
 
         user_id, role = command_parts[1], command_parts[2]
@@ -282,7 +282,7 @@ async def unknown_command(message: types.Message):
     await message.reply("<b>Извините, такой команды нет. Вот список доступных команд:</b>\n"
                         '/create_chat <i>chatname</i> — <b>создать чат</b>\n' +
                         '/add_user @username  <i>chatname</i> — <b>добавить пользователя в чат</b>\n' +
-                        '/change_permissions <i>@username</i> PM/USER — <b>выдать/забрать права ПМа</b>\n' +
+                        '/change_permission <i>@username</i> PM/USER — <b>выдать/забрать права ПМа</b>\n' +
                         '/delete_from_group @username  <i>chatname</i> — <b>удалить пользователя из одного чата</b>\n' +
                         '/delete_from_all <i>@username</i> — <b>удалить пользователя из всех чатов</b>\n' +
                         '/logs — получить логи', parse_mode='html')
